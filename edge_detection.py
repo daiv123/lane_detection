@@ -5,6 +5,9 @@ import matplotlib.pyplot as pyplot
 def polynomial(x, p) :
     return p[0] * x * x + p[1] * x + p[2]
 
+# calculate gradient in the x direction, non destructive
+# input: image
+# output: image_gradient scaled from 0-255
 def sobel_gradient_x(image) :
     img = image[:]
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS).astype(np.float)
@@ -17,6 +20,11 @@ def sobel_gradient_x(image) :
     scaled_sobel = np.uint8(255*abs_sobelx/np.max(abs_sobelx))
     return scaled_sobel
 
+# perform vertical perspective transformation 
+# visualize: draw the window that will be trasnformed
+# input: image: image
+#        k: ratio between top and bottom border length
+# output: transformed image
 def perspective_transform(image, k, visualize = False) :
     h, w = np.shape(image)[:2]
     tw = w * k
@@ -30,6 +38,7 @@ def perspective_transform(image, k, visualize = False) :
 
     return four_point_transform(image, pts)
 
+# NOT IN USE helper function for four point transform
 def order_points(pts):
     # initialzie a list of coordinates that will be ordered
     # such that the first entry in the list is the top-left,
@@ -49,6 +58,10 @@ def order_points(pts):
     rect[3] = pts[np.argmax(diff)]
     # return the ordered coordinates
     return rect
+
+#perform a four point perspective transformation
+#input: image: image
+#       pts: four points oredered tl, tr, br, bl
 def four_point_transform(image, pts):
 	# obtain a consistent order of the points and unpack them
 	# individually
@@ -84,6 +97,7 @@ def four_point_transform(image, pts):
     # return the warped image
     return warped
 
+# perform canny edge detection
 def edge_detection(image) :
     if len(image[0]) == 3 :
         image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -93,9 +107,13 @@ def edge_detection(image) :
     image_canny = cv2.Canny(image_smooth, 50, 100)
     return image_canny
 
+def hard_threshold(image, threshold) :
+    img_thresh = np.zeros_like(image)
+    img_thresh[(image > gradient_thresh[0]) & (image < gradient_thresh[1])] = 255
+    return img_thresh
+
 def adaptive_threshold(image) :
-    image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    image_smooth = cv2.GaussianBlur(image_gray, (5,5), 0)
+    image_smooth = cv2.GaussianBlur(image, (5,5), 0)
     image_threshold = cv2.adaptiveThreshold(image_smooth,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
     return cv2.bitwise_not(image_threshold)
 def color_mask(image) :
