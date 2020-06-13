@@ -11,18 +11,18 @@ outDir = sys.argv[1]
 os.chdir(outDir)
 
 camera = PiCamera()
-camera.start_preview()
+
 sleep(2)
 key = input("Enter number of frames: ")
 counter = 1
 
 while key != 'q':
 
-    while not key.isnumeric()
+    while not key.isnumeric():
         key = input("Enter number of frames: ")
     
     num_frames = int(key)
-    for filename in camera.capture_continuous('img{counter:03d}.jpg'):
+    for filename in camera.capture_continuous('img %03d.jpg' % counter):
         print('Captured %s' % filename)
         print(int(key)-num_frames + 1)
 
@@ -33,4 +33,4 @@ while key != 'q':
             break
 
         sleep(1)
-    
+    key = input("Enter number of frames: ")    
