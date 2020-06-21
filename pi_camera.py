@@ -28,6 +28,6 @@ for filename in camera.capture_continuous('img{counter:03d}.jpg'):
         key = input("Enter number of frames: ") 
         while not key.isnumeric():
             key = input("Enter number of frames: ")
-
-    sleep(1)
+        num_frames = int(key)
+    sleep(0.5)
        
