@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as pyplot
 import math
 
+
 def polynomial(x, p) :
     return p[0] * x * x + p[1] * x + p[2]
-
-
 
 
 # calculate gradient in the x direction, non destructive
@@ -225,15 +224,20 @@ def poly_detection_sliding_box(image, starting_pos, box_dim = (1000, 400), visua
         left_ind[1].extend(new_ind[0]+y1)
 
         #recalculate and find next pos
-        p = np.polyfit(left_ind[1], left_ind[0], 2) #f(y) = x
-        curPos = (int(polynomial(curPos[1] - box_height, p)),curPos[1] - box_height)
-
+        if len(left_ind[0]) > 0 :
+            p = np.polyfit(left_ind[1], left_ind[0], 2) #f(y) = x
+            curPos = (int(polynomial(curPos[1] - box_height, p)),curPos[1] - box_height)
+        else :
+            curPos = (curPos[0], curPos[1] - box_height)
         if visualize :
             p = np.polyfit(left_ind[1], left_ind[0], 2) #f(y) = x
             visualize_poly(frame, p, copy=False, color = (255, int(y1/len(image) * 255), int(y1/len(image) * 255)), invert = True)
             cv2.rectangle(frame, (x1,y1),(x2,y2),(0,255,0))
     
     # calculate final coefecients
+    if len(left_ind[0]) == 0 :
+        print("nothing foundlp")
+        return (0,0,0)
     p = np.polyfit(left_ind[1], left_ind[0], 2)
     if visualize :
         visualize_poly(frame, p, copy = False, color = (255,0,0), invert = True)
@@ -289,14 +293,28 @@ def visualize_poly(frame, p, copy = True, color = (0,0,255), invert = False):
 def dist(pt1, pt2) :
     return np.linalg.norm(pt1-pt2)
 
+def pipeline(image, overlay = True) :
+    h, w, C = np.shape(image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image_white_mask = hard_threshold(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY), (110, 255))
+    x_start = np.argmax(histogram(image_white_mask[h-100:, :]))
 
+    if overlay :
+        visualization = image[:]
+        p = poly_detection_sliding_box(image_white_mask,(x_start, h), (100, 20), visualize= False, frame = visualization)
+        visualize_poly(visualization, p, copy = False, invert = True)
+    else :
+        visualization = np.zeros_like(image[:,:,0])
+        p = poly_detection_sliding_box(image_white_mask,(x_start, h), (100, 20), visualize= False)
+        visualize_poly(visualization, p, copy = False, invert = True, color = (255))
+    return visualization
 
 def main() :
     
     image = cv2.imread('images/straight.jpg')
     image = perspective_transform_angle(image, 45)
     h, w, C = np.shape(image)
-    cv2.imshow("image", image)
+    cv2.imshow("image", imagecur)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     image_white_mask = hard_threshold(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY), (110, 255))
