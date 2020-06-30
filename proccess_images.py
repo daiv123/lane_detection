@@ -14,19 +14,22 @@ def rotate(image, angle) :
 
 def process(image) :
 
-    
-    
-    return image
+    img_processed = ldu.pipeline(image)    
+    # img_processed = image[len(image)-150:, :]
+    return img_processed
 
 def main() :
 
     if len(sys.argv) != 3:
         print("usage: process_images.py indir outdir")
         exit()
-
+    do_all = False
     images = [(cv2.imread(file.path), file.name) for file in os.scandir(sys.argv[1]) if (file.is_file() and file.name[0] != '.')]
     os.chdir(sys.argv[2])
     for img, img_name in images :
+        if do_all:
+            cv2.imwrite(img_name, process(img))
+            continue
         cv2.imshow(img_name, img)
         img_processed = process(img)
         cv2.imshow("processed image", img_processed)

@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+
 class NeuralNet(torch.nn.Module):
     def __init__(self, lrate, loss_fn, in_size,out_size):
         """
@@ -25,10 +26,10 @@ class NeuralNet(torch.nn.Module):
         pool_size = (2,2)
         kernal_size = (3,3)
         dropout_rate = 0.2
-        self.2d_pipeline = nn.Sequential(
+        self.pipeline = nn.Sequential(
             nn.BatchNorm2d(3),
             nn.Conv2d(3, 8, kernal_size),
-            nn.ReLU()
+            nn.ReLU(),
             nn.Conv2d(8,16,kernal_size),
             nn.ReLU(),
 
@@ -44,12 +45,28 @@ class NeuralNet(torch.nn.Module):
             nn.ReLU(),
             nn.Dropout2d(dropout_rate),
 
-            nn.MaxPool2d(pool_size)
+            # nn.MaxPool2d(pool_size),
+
+            # nn.Upsample(scale_factor= 2),
+
+            nn.ConvTranspose2d(32, 32, kernal_size),
+            nn.ReLU(),
+            nn.Dropout2d(dropout_rate),
+            nn.ConvTranspose2d(32, 16, kernal_size),
+            nn.ReLU(),
+            nn.Dropout2d(dropout_rate),
+            nn.ConvTranspose2d(16, 16, kernal_size),
+            nn.ReLU(),
+            nn.Dropout2d(dropout_rate),
+
+            nn.Upsample(scale_factor = 2),
+
+            nn.ConvTranspose2d(16, 8, kernal_size),
+            nn.ReLU(),
+            nn.ConvTranspose2d(8, 1, kernal_size)
+
         )
-        self.1d_pipeline = nn.Sequential(
-            nn.Linear(w*h*out_depth, 128)
-            nn.Linear(128, 6)
-        )
+        
 
 
         self.in_size = in_size
@@ -70,12 +87,11 @@ class NeuralNet(torch.nn.Module):
                       Note that self.decoder output needs to be reshaped from
                       [N, 1, 28, 28] to [N, out_size] beforn return.
         """
-        out = self.2d_pipeline(x)
-        print(out.shape())
-        out = self.1d_pipeline(out)
+        out = self.pipeline(x)
+        print(out.size())
         return out
 
-    def step(self, x):
+    def step(self, x, labels):
         # x [100, 784]
         """
         Performs one gradient step through a batch of data x with labels y
@@ -84,14 +100,14 @@ class NeuralNet(torch.nn.Module):
         """
         xhat = self(x)
 
-        L = self.loss_fn(xhat, x)
+        L = self.loss_fn(xhat, labels)
 
         self.optimizer.zero_grad()
         L.backward()
         self.optimizer.step()
         return L.item()
 
-def fit(train_set,dev_set,n_iter,batch_size=100):
+def fit(train_set,train_labels, dev_set,n_iter,batch_size=100):
     """ Fit a neural net.  Use the full batch size.
     @param train_set: an (N, 784) torch tensor
     @param dev_set: an (M, 784) torch tensor
@@ -112,16 +128,18 @@ def fit(train_set,dev_set,n_iter,batch_size=100):
     while i * batch_size < N and i < n_iter:
         if (i+1)*batch_size < N :
             batch = train_set[i*batch_size : (i+1)*batch_size]
+            labels = train_labels[i*batch_size : (i+1)*batch_size]
         else :
             batch = train_set[i*batch_size : N]
-        loss = net.step(batch)
+            labels = train_labels[i*batch_size : N]
+        
+        loss = net.step(batch,labels)
         losses.append(loss)
         i+=1
     
     
     #use
     xhats = net.forward(dev_set)
-    xhats = xhats.detach().numpy()
-    torch.save(net, "net_p3")
+    torch.save(net, "conv_net")
  
     return losses,xhats, net
