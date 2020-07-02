@@ -226,7 +226,17 @@ def poly_detection_sliding_box(image, starting_pos, box_dim = (1000, 400), visua
         #recalculate and find next pos
         if len(left_ind[0]) > 0 :
             p = np.polyfit(left_ind[1], left_ind[0], 2) #f(y) = x
-            curPos = (int(polynomial(curPos[1] - box_height, p)),curPos[1] - box_height)
+            x = int(polynomial(curPos[1] - box_height, p))
+            if curPos[0]-x > box_width * 0.5 :
+                x = curPos[0] - box_width
+                y = curPos[1]
+            elif x-curPos[0] > box_width * 0.5 :
+                x = curPos[0] + box_width
+                y = curPos[1]
+            else :
+                y = curPos[1] - box_height
+
+            curPos = (x,y)
         else :
             curPos = (curPos[0], curPos[1] - box_height)
         if visualize :
@@ -297,11 +307,11 @@ def pipeline(image, overlay = True) :
     h, w, C = np.shape(image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_white_mask = hard_threshold(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY), (110, 255))
-    x_start = np.argmax(histogram(image_white_mask[h-100:, :]))
+    x_start = np.argmax(histogram(image_white_mask[h-20:, :]))
 
     if overlay :
         visualization = image[:]
-        p = poly_detection_sliding_box(image_white_mask,(x_start, h), (100, 20), visualize= False, frame = visualization)
+        p = poly_detection_sliding_box(image_white_mask,(x_start, h), (75, 19), visualize= False, frame = visualization)
         visualize_poly(visualization, p, copy = False, invert = True)
     else :
         visualization = np.zeros_like(image[:,:,0])
@@ -311,10 +321,10 @@ def pipeline(image, overlay = True) :
 
 def main() :
     
-    image = cv2.imread('images/straight.jpg')
-    image = perspective_transform_angle(image, 45)
+    image = cv2.imread('curve_crop/img057.jpg')
+    # image = perspective_transform_angle(image, 45)
     h, w, C = np.shape(image)
-    cv2.imshow("image", imagecur)
+    cv2.imshow("image", image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     image_white_mask = hard_threshold(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY), (110, 255))
@@ -323,7 +333,7 @@ def main() :
     x_start = np.argmax(histogram(image_white_mask))
 
     visualization = image[:]
-    p = poly_detection_sliding_box(image_white_mask,(x_start, h), (100, 20), visualize= True, frame = visualization)
+    p = poly_detection_sliding_box(image_white_mask,(x_start, h), (50, 15), visualize= True, frame = visualization)
     visualize_poly(visualization, p, copy = False, invert = True)
     cv2.imshow("lines", visualization)
     pyplot.show()
