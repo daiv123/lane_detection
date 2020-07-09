@@ -296,7 +296,7 @@ def visualize_poly(frame, p, copy = True, color = (0,0,255), invert = False):
     # use opencv polygon line to connect points
     pts = np.array(pts)
     pts = pts.reshape((-1,1,2))
-    cv2.polylines(lines_visualize, [pts], False, color, thickness = 3)
+    cv2.polylines(lines_visualize, [pts], False, color, thickness = 10)
 
     return lines_visualize
 

@@ -16,6 +16,8 @@ def process(image) :
 
     img_processed = ldu.pipeline(image)    
     # img_processed = image[len(image)-150:, :]
+    # img_processed = rotate(image, 4)
+    # img_processed = img_processed[len(img_processed)-12-160:len(img_processed)-12, 10:len(image[0])-10]
     return img_processed
 
 def main() :
@@ -23,8 +25,9 @@ def main() :
     if len(sys.argv) != 3:
         print("usage: process_images.py indir outdir")
         exit()
-    do_all = False
+    do_all = True
     images = [(cv2.imread(file.path), file.name) for file in os.scandir(sys.argv[1]) if (file.is_file() and file.name[0] != '.')]
+    print("Loaded Images")
     os.chdir(sys.argv[2])
     for img, img_name in images :
         if do_all:
@@ -39,6 +42,7 @@ def main() :
             cv2.imwrite(img_name, img_processed)
             print(img_name + " processed")
         elif key & 0xFF == ord('q') :
+            cv2.destroyAllWindows()
             exit()
         else :
             print(img_name + " skipped")

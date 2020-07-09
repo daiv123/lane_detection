@@ -45,9 +45,9 @@ class NeuralNet(torch.nn.Module):
             nn.ReLU(),
             nn.Dropout2d(dropout_rate),
 
-            # nn.MaxPool2d(pool_size),
+            nn.MaxPool2d(pool_size),
 
-            # nn.Upsample(scale_factor= 2),
+            nn.Upsample(scale_factor= 2),
 
             nn.ConvTranspose2d(32, 32, kernal_size),
             nn.ReLU(),
@@ -88,7 +88,6 @@ class NeuralNet(torch.nn.Module):
                       [N, 1, 28, 28] to [N, out_size] beforn return.
         """
         out = self.pipeline(x)
-        print(out.size())
         return out
 
     def step(self, x, labels):
@@ -121,25 +120,32 @@ def fit(train_set,train_labels, dev_set,n_iter,batch_size=100):
     @return net: A NeuralNet object
     # NOTE: This must work for arbitrary M and N
     """
-    net = NeuralNet(0.05, nn.MSELoss(), 28*28, 28*28)
+
+    print("initiating")
+    net = NeuralNet(0.1, nn.MSELoss(), 28*28, 28*28)
     losses = []
     N = len(train_set)
-    i = 0
-    while i * batch_size < N and i < n_iter:
-        if (i+1)*batch_size < N :
-            batch = train_set[i*batch_size : (i+1)*batch_size]
-            labels = train_labels[i*batch_size : (i+1)*batch_size]
-        else :
-            batch = train_set[i*batch_size : N]
-            labels = train_labels[i*batch_size : N]
-        
-        loss = net.step(batch,labels)
-        losses.append(loss)
-        i+=1
+    print(N)
+    
+    for k in range(128) :
+        i = 0
+        while i * batch_size < N and i < n_iter:
+            if (i+1)*batch_size < N :
+                batch = train_set[i*batch_size : (i+1)*batch_size]
+                labels = train_labels[i*batch_size : (i+1)*batch_size]
+            else :
+                batch = train_set[i*batch_size : N]
+                labels = train_labels[i*batch_size : N]
+            
+            loss = net.step(batch,labels)
+            losses.append(loss)
+            i+=1
+    print("round", k , "done")      
     
     
     #use
     xhats = net.forward(dev_set)
-    torch.save(net, "conv_net")
+    torch.save(net, "conv_net3")
+    print("saved as conv_net3")
  
     return losses,xhats, net
